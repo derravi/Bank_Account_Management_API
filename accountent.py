@@ -2,7 +2,7 @@ from fastapi import FastAPI,HTTPException
 from typing import Dict
 from fastapi.responses import JSONResponse
 from Models.models import account_details,dummy_account_details
-from Models.models import opational_account_model,deposit_mmodel
+from Models.models import opational_account_model,deposit_mmodel,withdraw_mmodel,transfer_model
 
 
 import json
@@ -99,23 +99,6 @@ def update_acct(account_id:str,edit_acnt:opational_account_model):
     save_data(data)
 
     return JSONResponse(status_code=200, content={"message":"Data Successfully updated."})
- 
-#Deposite Endpoint for Accountent.
-@app.put("/deposit/{account_id}",response_model=deposit_mmodel)
-def deposit_amount(account_id:str,dep_model:deposit_mmodel):
-    
-    data = load_data()
-
-    if account_id not in data:
-        raise HTTPException(status_code=404,detail="Account not Existed.")
-    
-    data[account_id]["balance"] = data[account_id]["balance"] +  dep_model.balance
-
-    save_data(data)
-
-    return {"message":"Deposite Successfull.",
-            "Account id":account_id,
-            "Current Amount":data[account_id]["balance"]}
 
 #Delete Endpoint use for delete the account of the User.
 @app.delete("/delete_account/{account_id}")
@@ -131,3 +114,59 @@ def del_account(account_id:str):
     save_data(data)
     
     return JSONResponse(status_code=200,content={"message":"Account data is removed."})
+
+#Deposite Endpoint for Accountent.
+@app.put("/deposit/{account_id}")
+def deposit_amount(account_id:str,dep_model:deposit_mmodel):
+    
+    data = load_data()
+
+    if account_id not in data:
+        raise HTTPException(status_code=404,detail="Account not Existed.")
+    
+    if dep_model.balance <=0:
+        raise HTTPException(status_code=400, detail="Deposit amount must be grater than 0.")
+
+    data[account_id]["balance"] += dep_model.balance
+
+    save_data(data)
+
+    return {"message":"Deposite Successfull.",
+            "Account id":account_id,
+            "Deposite Amount":dep_model.balance,
+            "Total Amount":data[account_id]["balance"]}
+
+# withdraw endpoints
+@app.put("/withdraw/{account_id}")
+def withdraw_money(account_id:str,with_model:withdraw_mmodel):
+
+    data = load_data()
+
+    if account_id not in data:
+        raise HTTPException(status_code=404,detail="Account not Existed.")
+    
+    if with_model.balance == 0:
+        raise HTTPException(status_code=400, detail="Total Amount is 0.")
+    
+    data[account_id]["balance"] -= with_model.balance
+
+    save_data(data)
+
+    return {"message":"Deposite Successfull.",
+            "Account id":account_id,
+            "Deposite Amount":with_model.balance,
+            "Total Amount":data[account_id]["balance"]}
+
+#Money Transfer Model.
+@app.put("/transfer/{account_id}")
+def money_transfer(account_id:str,trans_model:transfer_model):
+
+    data = load_data()
+
+    if account_id not in data:
+        raise HTTPException(status_code=404,detail="Sender Account not Found.")
+    
+    if trans_model.to_account not in data:
+        raise HTTPException(status_code=404,detail="Reciver Account not Found.")
+    
+    if 

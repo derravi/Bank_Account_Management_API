@@ -21,7 +21,15 @@ class opational_account_model(BaseModel):
     gmail:Annotated[Optional[EmailStr],Field(default=None)]
     password:Annotated[Optional[str],Field(default=None)]
 
-#response model for Account Balance
-
+#response model for Deposit Balance
 class deposit_mmodel(BaseModel):
     balance : Annotated[float,Field(...,ge=0,description="Enter the Balacne of the Account.",examples=[123.01])]
+
+#response model for Withdraw Balance
+class withdraw_mmodel(BaseModel):
+    balance : Annotated[float,Field(...,ge=0,description="Enter the Balacne of the Account.",examples=[123.01])]
+
+#Transfer Model
+class transfer_model(BaseModel):
+    to_account:Annotated[str,Field(...,description="Reciver account ID.")]
+    balance:Annotated[float,Field(...,gt=0,description="Transfer Ammount.")]
