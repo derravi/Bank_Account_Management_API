@@ -3,7 +3,7 @@ from typing import Dict
 from fastapi.responses import JSONResponse
 from Models.models import account_details,dummy_account_details
 from Models.models import opational_account_model,deposit_mmodel,withdraw_mmodel,transfer_model
-
+from datetime import datetime
 
 import json
 
@@ -163,10 +163,42 @@ def money_transfer(account_id:str,trans_model:transfer_model):
 
     data = load_data()
 
+    #To check Sender Account is existed or not 
     if account_id not in data:
         raise HTTPException(status_code=404,detail="Sender Account not Found.")
     
+    #To check Reciver Account is existed or not 
     if trans_model.to_account not in data:
         raise HTTPException(status_code=404,detail="Reciver Account not Found.")
+
+    #To check both account same or not
+    if account_id == trans_model.to_account:
+        raise HTTPException(status_code=400,detail="Sender and Reciveraccount can not be same.")
     
-    if 
+    #Check the Balance of User need to transfer.
+    if trans_model.balance <=0:
+        raise HTTPException(status_code=400, detail="Transfer ammount must be grater than 0.")
+    
+    #To Check the balance of sender account.
+    if data[account_id]['balance'] < trans_model.balance:
+        raise HTTPException(status_code=400,detail="Insufficient balance in sender account.")
+    
+    #Balance management from both account.
+    data[trans_model.to_account]['balance'] = data[trans_model.to_account]['balance'] + trans_model.balance
+    data[account_id]['balance'] = data[account_id]['balance'] - trans_model.balance
+
+    #save updated data
+    save_data(data)
+
+    timestamp = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+
+    #Return requernment field.
+    return {
+        "message": "Money transferred successfully",
+        "From Account": account_id,
+        "To Accounnt" : trans_model.to_account,
+        "Transfer Ammount": trans_model.balance,
+        "Current Sender Balance":data[account_id]['balance'],
+        "Current Reciver Balance":data[trans_model.to_account]['balance'],
+        "Time":timestamp
+    }
